@@ -4,14 +4,14 @@
 #include <thread>
 #include <chrono>
 
-void putTest(LinkedBlockingQueue& queue) {
+void putTest(LinkedBlockingQueue<int>& queue) {
     for(int i = 0; i < 100; i++) {
         queue.put(i+3);
         std::this_thread::sleep_for(std::chrono::nanoseconds(100));
     }
 }
 
-void takeTest(LinkedBlockingQueue& queue, int x) {
+void takeTest(LinkedBlockingQueue<int>& queue, int x) {
     int val;
     for(int i = 0; i < 50; i++) {
         queue.take(val);
@@ -20,7 +20,7 @@ void takeTest(LinkedBlockingQueue& queue, int x) {
 }
 
 int main() {
-    LinkedBlockingQueue queue{10};
+    LinkedBlockingQueue<int> queue{10};
 
 //    for(int i = 0; i < 10; i++) {
 //        queue.put(i);

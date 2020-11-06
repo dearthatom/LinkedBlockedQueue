@@ -10,17 +10,12 @@
 #include <condition_variable>
 #include <chrono>
 
-//using Clock = std::chrono::high_resolution_clock;
-//using Duration = Clock::duration;
-//using TimeUnit = std::chrono::time_point<Clock>;
-
-
-
+template <typename T>
 class LinkedBlockingQueue {
     struct Node {
-        int item;
+        T item;
         struct Node *next;
-        Node(int item):item(item), next(nullptr){}
+        Node(T item):item(item), next(nullptr){}
         Node(): next(nullptr) {}
     };
 
@@ -32,7 +27,7 @@ public:
     LinkedBlockingQueue() : LinkedBlockingQueue(INT64_MAX) {};
 
     LinkedBlockingQueue(int64_t capacity): count(0),capacity(capacity) {
-        head = last = new Node(-1);
+        head = last = new Node();
     }
 
 private:
@@ -72,7 +67,7 @@ private:
      * Links node at end of queue/
      * @param node the node
      */
-    void enqueue(int item) {
+    void enqueue(const T& item) {
         Node *node = new Node(item);
         last = last->next = node;
     }
@@ -81,13 +76,12 @@ private:
      * Removes a node from head of queue.
      * @return the node
      */
-    int dequeue() {
+    T& dequeue() {
         Node *h = head;
         Node *first = head->next;
         delete h;
         head = first;
-        int x = first->item;
-        return x;
+        return first->item;
     }
 
 
@@ -100,19 +94,19 @@ public:
 
     int64_t remainingCapacity() { return capacity - count; }
 
-    void put(const int item);
+    void put(const T& item);
 
     template <class Rep, class Period>
-    bool offer(const int item, const std::chrono::duration<Rep, Period> rel_time);
+    bool offer(const T& item, const std::chrono::duration<Rep, Period> rel_time);
 
-    bool offer(const int item);
+    bool offer(const T& item);
 
-    void take(int& returnVal);
+    void take(T& returnVal);
 
     template <class Rep, class Period>
-    bool poll(int &returnVal, const std::chrono::duration<Rep, Period> rel_time);
+    bool poll(T& returnVal, const std::chrono::duration<Rep, Period> rel_time);
 
-    bool poll(int &returnVal);
+    bool poll(T& returnVal);
 
 };
 
@@ -124,7 +118,8 @@ public:
  * necessary for space to become available
  * @param item
  */
-void LinkedBlockingQueue::put(const int item){
+template <typename T>
+void LinkedBlockingQueue<T>::put(const T& item){
     int c;
     {
         std::unique_lock<std::mutex> lck{putLock};
@@ -150,8 +145,9 @@ void LinkedBlockingQueue::put(const int item){
  * @return {@code true} if successfully, or {@code false} if the
  *         the specified waiting time elapses before space is available.
  */
+template <typename T>
 template <class Rep, class Period>
-bool LinkedBlockingQueue::offer(const int item, const std::chrono::duration<Rep, Period> rel_time) {
+bool LinkedBlockingQueue<T>::offer(const T& item, const std::chrono::duration<Rep, Period> rel_time) {
     int c;
     {
         std::unique_lock<std::mutex> lck{putLock};
@@ -186,8 +182,8 @@ bool LinkedBlockingQueue::offer(const int item, const std::chrono::duration<Rep,
  * @return {@code true} if successfully, or {@code false} if
  * space isn't available.
  */
-
-bool LinkedBlockingQueue::offer(const int item){
+template <typename T>
+bool LinkedBlockingQueue<T>::offer(const T& item){
     int c;
     {
         std::unique_lock<std::mutex> lck{putLock};
@@ -208,7 +204,8 @@ bool LinkedBlockingQueue::offer(const int item){
     return true;
 }
 
-void LinkedBlockingQueue::take(int & returnVal) {
+template <typename T>
+void LinkedBlockingQueue<T>::take(T& returnVal) {
     int c;
     {
         std::unique_lock<std::mutex> lck{takeLock};
@@ -228,8 +225,9 @@ void LinkedBlockingQueue::take(int & returnVal) {
     }
 }
 
+template <typename T>
 template <class Rep, class Period>
-bool LinkedBlockingQueue::poll(int &returnVal, const std::chrono::duration<Rep, Period> rel_time) {
+bool LinkedBlockingQueue<T>::poll(T& returnVal, const std::chrono::duration<Rep, Period> rel_time) {
     int c;
     {
         std::unique_lock<std::mutex> lck{takeLock};
@@ -253,7 +251,8 @@ bool LinkedBlockingQueue::poll(int &returnVal, const std::chrono::duration<Rep, 
     return true;
 }
 
-bool LinkedBlockingQueue::poll(int &returnVal) {
+template <typename T>
+bool LinkedBlockingQueue<T>::poll(T& returnVal) {
     int c;
     {
         std::unique_lock<std::mutex> lck{takeLock};
